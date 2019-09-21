@@ -1,0 +1,150 @@
+\documentclass[11pt]{article}
+
+\usepackage{fullpage}
+\parindent=0in
+\input{testpoints}
+
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{color}
+
+\newcommand{\argmax}{\mathop{\arg\max}}
+\newcommand{\argmin}{\mathop{\arg\min}}
+
+\newcommand{\deriv}[1]{\frac{\partial}{\partial {#1}} }
+\newcommand{\dsep}{\mbox{dsep}}
+\newcommand{\Pa}{\mathop{Pa}}
+\newcommand{\ND}{\mbox{ND}}
+\newcommand{\De}{\mbox{De}}
+\newcommand{\Ch}{\mbox{Ch}}
+\newcommand{\graphG}{{\mathcal{G}}}
+\newcommand{\graphH}{{\mathcal{H}}}
+\newcommand{\setA}{\mathcal{A}}
+\newcommand{\setB}{\mathcal{B}}
+\newcommand{\setS}{\mathcal{S}}
+\newcommand{\setV}{\mathcal{V}}
+\DeclareMathOperator*{\union}{\bigcup}
+\DeclareMathOperator*{\intersection}{\bigcap}
+\DeclareMathOperator*{\Val}{Val}
+\newcommand{\mbf}[1]{{\mathbf{#1}}}
+\newcommand{\eq}{\!=\!}
+
+\allowdisplaybreaks
+
+
+\begin{document}
+
+{\centering
+  \rule{6.3in}{2pt}
+  \vspace{1em}
+  {\Large
+    CS689: Machine Learning - Fall 2019\\
+    Homework 1\\
+  }
+  \vspace{1em}
+  Sankaran Vaidyanathan (svaidyanatha@cs.umass.edu) \\
+  \vspace{0.1em}
+  \rule{6.3in}{1.5pt}
+}
+\vspace{1pc}
+
+ %%%%%%%%%%%%%%%%%%%%%%% begin Q1 %%%%%%%%%%%%%%%%%%%%%%%%
+
+\textbf{1. Optimal Predictions for Zero-One Loss} 
+	
+\textbf{a.} Using the given loss criterion, we can find the optimal prediction function $f_*$ as follows:
+\begin{align*}
+	f_* &= \argmin_f \mathbb{E}_{P(x,y)}[L_{01}(y,f(x))]	 \\
+	 	&= \argmin_f \int_{x \in R} \sum_{y \in \{0,1\} } L_{01}(y,f(x))P(X=x,Y=y) dx \\
+	 	&= \argmin_f  \mathbb{E}_{P(x)} \bigg [ \mathbb{E}_{P(y|x)} \big[L_{01}(y,f(x))\big]\bigg] \\
+	 	&=  \mathbb{E}_{P(x)} \bigg [ \argmin_f \mathbb{E}_{P(y|x)} \big[L_{01}(y,f(x))\big]\bigg]
+\end{align*}
+
+Here, the last step is a result of the $x$'s being i.i.d. Considering the optimal prediction for a given $x$, we can write the objective as follows:
+\begin{align*}
+	f_*(x) &= \argmin_f  \mathbb{E}_{P(y|x)} \big[L_{01}(y,f(x))\big] \\
+				&= \argmin_f \sum_{y \in \{0,1\} } L_{01}(y,f(x))P(Y=y|X=x)
+\end{align*}
+
+The above function is the optimization objective. Here, $L_{01}(y,f(x)) = \begin{cases} 0 & \text{if } y=f(x) \\ 1 & \text{if } y \neq f(x) \end{cases} = 1 - [y = f(x)]$
+
+\vspace{1em}
+
+\textbf{b.} We have:
+
+\begin{align*}
+f_*(x) &= \argmin_f \sum_{y \in \{0,1\} } L_{01}(y,f(x))P(Y=y|X=x) \\ 
+		&= \argmin_f \sum_{y \in \{0,1\} } (1 - [y = f(x)])P(Y=y|X=x) \\
+		&= \argmin_f \bigg\{ \sum_{y \in \{0,1\} }P(Y=y|X=x) - \sum_{y \in \{0,1\} } [y = f(x)]P(Y=y|X=x) \bigg\} \\
+		&= \argmin_f \bigg\{ 1 - \sum_{y \in \{0,1\} } [y = f(x)]P(Y=y|X=x) \bigg\} \\
+		&= \argmin_f \bigg\{ \sum_{y \in \{0,1\} } [y = f(x)] - \sum_{y \in \{0,1\} } [y = f(x)]P(Y=y|X=x) \bigg\} \\
+		&= \argmin_f \bigg\{ \sum_{y \in \{0,1\} } [y = f(x)](1 - P(Y=y|X=x)) \bigg\} \\
+		&= \argmax_f \bigg\{ \sum_{y \in \{0,1\} } [y = f(x)]P(Y=y|X=x) \bigg\} \\
+		&= \argmax_{y \in \{0,1\}} P(Y=y|X=x)
+\end{align*}
+
+The last expression appears because the term in the sum goes to zero if $y \ne f(x)$; when $y = f(x)$, the term is maximized by the value of $y$ with highest conditional probability $P(Y=y|X=x)$.
+ 
+ %%%%%%%%%%%%%%%%%%%%%%% end Q1 %%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{problem}{40} \textbf{Logistic Regression with Centering:} In the standard binary logistic regression model, the probability of the class variable $y\in\{-1,1\}$ is modeled as a logistic function of the input $\mbf{x}$ and the parameters $\theta=[\mbf{w},b]$:  
+	
+	$$P(Y=y|\mbf{X}=\mbf{x},\theta) = \frac{1}{1+\exp(-y (\mbf{w}\mbf{x}^T + b))}$$
+	
+A common pre-processing approach when applying machine learning models is to pre-center the inputs so the mean on each dimension is 0. We can instead learn an optimal centering of the inputs by augmenting the logistic regression model with a vector of centering parameters $\mbf{c}$. The augmented parameter set is $\theta=[\mbf{w},\mbf{c}, b]$ and the augmented model is:
+
+	$$P(Y=y|\mbf{X}=\mbf{x},\theta) = \frac{1}{1+\exp(-y (\mbf{w}(\mbf{x}-\mbf{c})^T + b))}$$
+
+In this question, we will implement and analyze this augmented model. As the learning objective function, we will minimize the regularized negative conditional log likelihood:
+
+$$\mathcal{L}(\mathcal{D},\theta) = \sum_{n=1}^N \log(1+\exp(-y_n(\mbf{w}(\mbf{x}_n-\mbf{c})^T+b))) + \lambda\Vert \mbf{w}\Vert_2^2 + \lambda\Vert \mbf{c}\Vert_2^2 +\lambda\cdot b^2$$
+
+
+\newpart{5} Find the gradient of $\mathcal{L}(\mathcal{D},\theta)$ with respect to $\mbf{w}$, 
+$\mbf{c}$, and $b$. Show your work.\\
+
+\newpart{20} \hspace{0.5em} ~Starting from the provided template, implement a Scikit-Learn compatible class for this model. For learning, use the fmin\_l\_bfgs\_b optimizer from scipy.optimize with the disp=10 option to see output from the optimizer. Initialize all model parameters to 0. As your answer to this question, describe any issues you had implementing the model and what approach you used to fix them.\\
+
+\newpart{5} Learn the model on the provided training data set with $\lambda=1e-6$, and evaluate it by computing its average prediction error on the test set. The entire learning procedure should take a few seconds. Report the average test error that you find as your answer to this question.\\
+
+\newpart{5} Using the provided data, learn a standard logistic regression model using scikit-learn's linear\_model.LogisticRegression implementation with $C=10^6$ and solver='lbfgs'. Leave the other model hyper-parameters at their default values. Evaluate the standard model by computing its average prediction error on the test set. Report the average test error that you find as your answer to this question.\\
+
+\newpart{5} If your implementation is correct, you should find that the augmented and standard models perform nearly identically. Explain why you think this is the case, providing as much detail as possible. 
+\end{problem}
+
+
+\begin{problem}{45} \textbf{Regression with Outliers:} One important problem with standard least-squares linear regression is that outliers can significantly corrupt learning. One way to combat this problem is with regression loss functions that are less sensitive to larger errors. Consider the robust prediction loss function shown below where $\delta>0$ is a parameter of the loss.
+	
+$$L_{\delta}(y,y')= \delta^2(\sqrt{1+(y-y')/\delta^2} - 1)$$
+
+Using this robust loss for a linear regression model $f(\mbf{x}_n,\theta)=\mbf{w}\mbf{x}_n^T + b$
+results in the learning objective
+$$\mathcal{L}_{\delta}(\mathcal{D},\theta) = \sum_{n=1}^N L_{\delta}(y_n,f(\mbf{x}_n,\theta))$$
+
+Use this model, objective function, and loss to answer the following questions. Assume that $\mbf{x}\in\mathbb{R}^D$ and $y\in\mathbb{R}$ in your derivations and code. \\
+
+\newpart{5} Produce a plot of the robust loss function $L_{\delta}(y,y')$ for $\delta\in\{0.1, 1, 10\}$ where the x-axis corresponds to the prediction error $\epsilon=y-y'$ and the y-axis corresponds to the value of the loss. In the same figure, also include a similar plot of the standard squared loss $L_{sqr}(y,y')= (y-y')^2$. Use these plots to explain why the loss $L_{\delta}(y,y')$ could result in less sensitivity to outliers than the squared loss $L_{sqr}(y,y')$.\\
+
+\newpart{5} Find the gradient of $\mathcal{L}_{\delta}(\mathcal{D},\theta)$ with respect to $\mbf{w}$ and $b$. Show your work.\\
+
+\newpart{20} \hspace{0.5em} Starting from the provided template, implement a Scikit-Learn compatible class for this model. For learning, use the fmin\_l\_bfgs\_b optimizer from scipy.optimize with the disp=10 option to see output from the optimizer. Initialize all model parameters to 0. As your answer to this question, describe any issues you had implementing the model and what approach you used to fix them.
+\\
+
+\newpart{5} Using the provided data set, apply the model using $\delta=1$. Also apply Scikit-Learn's standard least-squares linear regression model linear\_model.LinearRegression. Report the MSE achieved by both models on the train data set.\\
+
+\newpart{5} Provide a single figure that includes a scatter plot of the training data, the regression line found using the robust model (with $\delta=1$, and the regression line found using the standard least-squares model. \\
+
+\newpart{5} Based on this plot, which model do you think would have better generalization performance on future test data? Explain your answer. \\
+
+\end{problem}
+
+
+\showpoints
+\end{document}

@@ -6,7 +6,7 @@ class AugmentedLinearRegression:
     """Augmented linear regression.
 
     Arguments:
-        delta (float): the trade-off parameter of the loss 
+        delta (float): the trade-off parameter of the loss
     """
     def __init__(self, delta):
         self.delta = delta
@@ -21,11 +21,11 @@ class AugmentedLinearRegression:
                 Training input matrix where each row is a feature vector.
             y (ndarray, shape = (n_samples,)):
                 Real-valued output vector for training.
-        
+
         Notes: This function must set member variables such that a subsequent call
-        to get_params or predict uses the learned parameters, overwriting 
+        to get_params or predict uses the learned parameters, overwriting
         any parameter values previously set by calling set_params.
-        
+
         """
 
         # Set up parameters
@@ -70,10 +70,16 @@ class AugmentedLinearRegression:
                 the objective function evaluated on wb=[w,b] and the data X,y..
         """
 
-        y_hat = np.dot(wb,X.T)
-        objective = self.delta**2 * np.sqrt(1 + ((y - y_hat)**2 / self.delta**2) - 1)
-        objective = np.sum(objective)
-        return objective
+        objective1 = np.zeros(X.shape[0])
+        for n in range(X.shape[0]):
+            objective1[n] = self.delta**2 * (np.sqrt(1 + ((y[n] - np.dot(wb,X[n].T))**2 / self.delta**2)) - 1)
+        objective1 = np.sum(objective1)
+
+        # y_hat = np.dot(wb,X.T)
+        # objective = self.delta**2 * (np.sqrt(1 + ((y - y_hat)**2 / self.delta**2)) - 1)
+        # objective = np.sum(objective)
+
+        return objective1
 
 
     def objective_grad(self, wb, X, y):

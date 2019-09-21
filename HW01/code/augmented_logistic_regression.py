@@ -23,9 +23,9 @@ class AugmentedLogisticRegression:
                 Training input matrix where each row is a feature vector.
             y (ndarray, shape = (n_samples,)):
                 Training output vector. Each entry is either -1 or 1.
-        
+
         Notes: This function must set member variables such that a subsequent call
-        to get_params or predict uses the learned parameters, overwriting 
+        to get_params or predict uses the learned parameters, overwriting
         any parameter values previously set by calling set_params.
         """
         self.w = np.zeros(X.shape[1])
@@ -67,8 +67,18 @@ class AugmentedLogisticRegression:
             objective (float):
                 the objective function evaluated at [w, b, c] and the data X, y.
         """
-        
-        pass
+        n_features = X.shape[1]
+        w = wcb[:n_features]
+        c = wcb[n_features:-1]
+        b = wcb[-1]
+
+        nll = np.zeros(X.shape[0])
+        for n in range(X.shape[0]):
+            #nll[n] = int(y[n]==-1)*(-np.dot(w,(X[n]-c).T) - b) - np.log(1 + np.exp(-np.dot(w,(X[n]-c).T) - b))
+            nll[n] = np.logaddexp(0, np.exp(-y[n]*(np.dot(w, (X[n] - c)) + b)))
+        objective = np.sum(nll)
+        objective += self.reg_param*(np.linalg.norm(w,2)**2 + np.linalg.norm(c,2)**2 + b**2)
+        return objective
 
     def objective_grad(self, wcb, X, y):
         """Compute the gradient of the learning objective function
@@ -86,8 +96,13 @@ class AugmentedLogisticRegression:
             objective_grad (ndarray, shape = (2*n_features + 1,)):
                 gradient of the objective function with respect to [w,c,b].
         """
-        
-        pass
+
+        n_features = X.shape[1]
+        w = wcb[:n_features]
+        c = wcb[n_features:-1]
+        b = wcb[-1]
+
+
 
     def get_params(self):
         """Get parameters for the model.
@@ -106,7 +121,7 @@ class AugmentedLogisticRegression:
         Arguments:
             w (ndarray, shape = (n_features,)): coefficients
             c (ndarray, shape = (n_features,)): centering parameters
-            b (float): bias 
+            b (float): bias
         """
         self.w = w
         self.c = c
@@ -121,7 +136,7 @@ def main():
     test_X = np.load('data/q2_test_X.npy')
     test_y = np.load('data/q2_test_y.npy')
 
-    
+
     lr = AugmentedLogisticRegression(lmbda = 1e-6)
     lr.fit(train_X, train_y)
 
