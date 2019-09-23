@@ -34,11 +34,11 @@ class AugmentedLinearRegression:
         wb_init = np.concatenate((self.w,self.b))
 
         # Add extra feature for bias
-        X = np.hstack((X,np.ones((X.shape[0],1))))
 
         argmin, f, d = fmin_l_bfgs_b(self.objective, x0 = wb_init, fprime = self.objective_grad, args = (X, y), disp=10)
 
-        print (argmin)
+        self.w = argmin[:-1]
+        self.b = argmin[-1]
 
     def predict(self, X):
         """Predict using the linear model.
@@ -70,16 +70,12 @@ class AugmentedLinearRegression:
                 the objective function evaluated on wb=[w,b] and the data X,y..
         """
 
-        objective1 = np.zeros(X.shape[0])
-        for n in range(X.shape[0]):
-            objective1[n] = self.delta**2 * (np.sqrt(1 + ((y[n] - np.dot(wb,X[n].T))**2 / self.delta**2)) - 1)
-        objective1 = np.sum(objective1)
+        X_tilde = np.hstack((X,np.ones((X.shape[0],1))))
+        y_hat = np.dot(wb,X_tilde.T)
 
-        # y_hat = np.dot(wb,X.T)
-        # objective = self.delta**2 * (np.sqrt(1 + ((y - y_hat)**2 / self.delta**2)) - 1)
-        # objective = np.sum(objective)
+        objective = np.sum(self.delta**2 * (np.sqrt(1 + ((y - y_hat)**2 / self.delta**2)) - 1))
 
-        return objective1
+        return objective
 
 
     def objective_grad(self, wb, X, y):
@@ -98,9 +94,9 @@ class AugmentedLinearRegression:
             objective_grad (ndarray, shape = (n_features + 1,)):
                 derivative of the objective function with respect to wb=[w,b].
         """
-        y_hat = np.dot(wb,X.T)
-        objective_coeff = ((y - y_hat)/np.sqrt(1 + ((y - y_hat)**2 / self.delta**2)))
-        objective_grad = np.dot(objective_coeff, X)
+        X_tilde = np.hstack((X,np.ones((X.shape[0],1))))
+        error = y - np.dot(wb,X_tilde.T)
+        objective_grad = np.sum((error / np.sqrt(1 + (error/self.delta)**2)) * (-X_tilde.T), axis=1)
         return objective_grad
 
     def get_params(self):
@@ -127,6 +123,11 @@ class AugmentedLinearRegression:
         self.w = w
         self.b = b
 
+def mean_squared_error(y, y_pred):
+    assert(y.size == y_pred.size)
+    N = y_pred.size
+    error = np.sum((y - y_pred)**2)/N
+    return error
 
 def main():
 
@@ -134,8 +135,21 @@ def main():
     train_X = np.load('data/q3_train_X.npy')
     train_y = np.load('data/q3_train_y.npy')
 
+    # Evaluate augmented linear regression function
+
     lr = AugmentedLinearRegression(delta=1)
     lr.fit(train_X, train_y)
+    pred_y = lr.predict(train_X)
+    print("Augmented Linear Regression")
+    print("Avg prediction error: " + str(mean_squared_error(train_y,pred_y)))
+
+    # Compare with sklearn's linear regression function
+
+    lr_reference = linear_model.LinearRegression()
+    lr_reference.fit(train_X, train_y)
+    pred_y_reference = lr_reference.predict(train_X)
+    print(" \nsklearn Linear Regression")
+    print("Avg prediction error: " + str(mean_squared_error(train_y,pred_y_reference)))
 
 if __name__ == '__main__':
     main()

@@ -104,23 +104,18 @@ class AugmentedLogisticRegression:
         c = wcb[n_features:-1]
         b = wcb[-1]
 
-        # grad_w = np.zeros(w.shape)
-        # grad_c = np.zeros(c.shape)
-        # grad_b = 0
-        # for n in range(n_samples):
-        #     coeff = -y[n] * np.exp(-y[n] * (np.dot(w,(X[n]-c).T) + b))/(1 + np.exp(-y[n] * (np.dot(w,(X[n]-c).T) + b)))
-        #     grad_w += coeff * (X[n] - c).T
-        #     grad_c += coeff * w.T
-        #     grad_b += coeff
-
         coeff = -y * np.exp(-y * (np.dot(w,(X-c).T) + b))/(1 + np.exp(-y * (np.dot(w,(X-c).T) + b)))
         grad_w = np.sum(coeff.reshape(-1,1) * (X-c), axis = 0)
         grad_c = np.sum(coeff) * -w
         grad_b = np.sum(coeff)
 
+        # Regularization
+
         grad_w += 2*self.reg_param*w.T
         grad_c += 2*self.reg_param*c.T
         grad_b += 2*self.reg_param*b
+
+        # Concatenate into one vector for lbfgs
 
         objective_grad = np.concatenate((grad_w,grad_c))
         objective_grad = np.concatenate((objective_grad,np.array([grad_b])))
@@ -164,12 +159,14 @@ def main():
     test_X = np.load('data/q2_test_X.npy')
     test_y = np.load('data/q2_test_y.npy')
 
+    # Evaluate augmented logistic regression
     lr = AugmentedLogisticRegression(lmbda = 1e-6)
     lr.fit(train_X, train_y)
-
     pred_y = lr.predict(test_X)
     print("Augmented Logistic Regression")
     print("Avg prediction error: " + str(zero_one_loss(test_y,pred_y)))
+
+    # Compare with sklearn's logistic regression function
 
     lr_reference = linear_model.LogisticRegression(C=1e6, solver='lbfgs')
     lr_reference.fit(train_X, train_y)
