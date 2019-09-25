@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 from sklearn import linear_model
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 class AugmentedLinearRegression:
     """Augmented linear regression.
@@ -129,6 +131,45 @@ def mean_squared_error(y, y_pred):
     error = np.sum((y - y_pred)**2)/N
     return error
 
+def plot_robust_loss():
+    deltas = [0.1,1,10]
+    error = np.linspace(0,10,num=50)
+
+    # Plot squared Error
+    sq_loss = error**2
+    plt.plot(error, sq_loss, label='squared loss', color='green')
+
+    # Plot robust loss
+    colors = np.array([0.3,0.6,0.9])
+    norm = mpl.colors.Normalize(vmin=0, vmax=1)
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
+    cmap.set_array([])
+    for color, delta in zip(colors, deltas):
+        robust_loss = delta**2 * (np.sqrt(1 + error**2/delta**2) -1)
+        plt.plot(error, robust_loss, label='robust loss, delta = ' + str(delta), color=cmap.to_rgba(color))
+
+    plt.title("Loss magnitude vs. error")
+    plt.legend()
+    plt.xlabel("Prediction error")
+    plt.ylabel("Loss value")
+    plt.xticks(np.linspace(0,10,11))
+    plt.yticks(np.linspace(0,100,11))
+    plt.savefig("plots/loss_vs_error.png")
+    plt.clf()
+
+def plot_regression_lines(lr1, lr2, X, y):
+    plt.scatter(X, y, c='orange', alpha=0.3)
+    y_pred_1 = lr1.predict(X)
+    plt.plot(X,y_pred_1, label="with robust loss", color='blue')
+    y_pred_2 = lr2.predict(X)
+    plt.plot(X,y_pred_2, label="sklearn", color='green')
+    plt.title("Regression Lines")
+    plt.legend()
+    plt.xlabel("X")
+    plt.ylabel("y", rotation=0)
+    plt.savefig("plots/regression_lines.png")
+    plt.clf()
+
 def main():
 
     np.random.seed(0)
@@ -150,6 +191,9 @@ def main():
     pred_y_reference = lr_reference.predict(train_X)
     print(" \nsklearn Linear Regression")
     print("Avg prediction error: " + str(mean_squared_error(train_y,pred_y_reference)))
+
+    plot_robust_loss()
+    plot_regression_lines(lr, lr_reference, train_X, train_y)
 
 if __name__ == '__main__':
     main()
