@@ -111,8 +111,8 @@ class AugmentedLogisticRegression:
 
         # Regularization
 
-        grad_w += 2*self.reg_param*w.T
-        grad_c += 2*self.reg_param*c.T
+        grad_w += 2*self.reg_param*w
+        grad_c += 2*self.reg_param*c
         grad_b += 2*self.reg_param*b
 
         # Concatenate into one vector for lbfgs
